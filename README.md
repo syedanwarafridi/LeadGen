@@ -127,7 +127,7 @@ lead_generation/
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/yourusername/lead-gen-agent.git
+git clone https://github.com/syedanwarafridi/lead-gen-agent.git
 cd lead-gen-agent
 pip install -r requirements.txt
 ```
