@@ -1,0 +1,691 @@
+AGENTIC LEAD GENERATION SYSTEM
+Full Technical Blueprint
+Pakistani Software Agency  ·  Targeting US · UK · UAE
+AI Model
+OpenAI GPT-4o
+Orchestration
+LangGraph
+Framework
+LangChain
+Channels
+Gmail · Sheets
+Prepared for internal use  ·  Version 2.0  ·  2025
+1. System Overview
+This document is the complete technical and operational blueprint for building an agentic lead generation system tailored to a Pakistani software development agency seeking foreign clients. The system uses LangChain and LangGraph to orchestrate a multi-agent pipeline powered by OpenAI GPT-4o, integrated with Gmail and Google Sheets for outreach and tracking.
+The system runs daily, finds qualified leads in US, UK, and UAE markets, enriches them with contact details and context, generates hyper-personalized outreach emails, sends them via Gmail, manages follow-up sequences, and logs everything to Google Sheets — all autonomously.
+What This System Replaces
+• 3–5 hours/day of manual prospecting on LinkedIn, Crunchbase, Upwork
+• Hand-written cold emails that are generic and get ignored
+• Missed follow-ups because you forgot or got busy with client work
+• No CRM — no visibility into what's working or where leads stand
+• Inconsistent outreach — sometimes daily, sometimes nothing for a week
+What This System Delivers
+• 20–30 qualified leads discovered and scored automatically every morning
+• Unique, personalized email written per lead — not a template
+• Automated 3-touch email sequence (Day 1 → Day 4 → Day 9)
+• Real-time CRM in Google Sheets — every lead tracked, every reply flagged
+• 1–2 discovery calls booked per week within the first 30 days
+2. Target Markets & Ideal Client Profiles
+The system is configured to pursue three distinct customer types across three geographies. Each has different pain points, buying signals, and outreach angles.
+2.1 Geographies
+Market
+Why Target Them
+Best Channels
+Time Zone Notes
+🇺🇸 United States
+Largest offshore buyer. Highest budgets. Most VC-funded startups.
+LinkedIn, Crunchbase, AngelList, Product Hunt
+PKT = EST+9. Send emails 8–10 AM EST = 5–7 PM PKT
+🇬🇧 United Kingdom
+Strong outsourcing culture. EU-adjacent. High SaaS density.
+LinkedIn, Companies House, Startups.co.uk
+PKT = BST+4. Send 9 AM BST = 1 PM PKT
+🇦🇪 UAE
+Growing tech scene. Near timezone (PKT=UAE+1). Prefer WhatsApp too.
+LinkedIn, UAE startup directories, Wamda.com
+PKT = GST+1. Near real-time communication.
+2.2 Customer Types
+Type A — Startups (Seed to Series B)
+The highest-value target. Recently funded startups need to build fast but can't afford $150k/year US engineers.
+Pain: Need to ship product but dev hiring is slow and expensive
+Signal: Job posts for engineers, recent funding announcements, small team on LinkedIn
+Budget: $3,000–$20,000/month for a dedicated dev team
+Pitch angle: 'We are your technical co-founder without the equity cost'
+Type B — SMBs (Small & Medium Businesses)
+Established businesses (5–200 employees) that need to digitize, modernize legacy systems, or build internal tools.
+Pain: IT projects stuck, in-house team too small, legacy software breaking
+Signal: Hiring IT staff, posting about digital transformation, old-looking website/product
+Budget: $5,000–$50,000 per project
+Pitch angle: 'We have delivered exactly this kind of project 3x — here's proof'
+Type C — Individuals / Solo Founders
+Non-technical solopreneurs or indie hackers who have an idea but no developer.
+Pain: Can't build it themselves, local dev quotes are $100k+, scared of getting scammed offshore
+Signal: IndieHackers posts, Reddit r/entrepreneur, 'looking for a developer' posts
+Budget: $1,000–$10,000 for MVP
+Pitch angle: 'We've built 10 MVPs. Here's one similar to your idea. Let's talk.'
+2.3 ICP Scoring Criteria
+Signal
+Weight
+How Agent Detects It
+Recently funded (< 90 days)
+High (+3)
+Crunchbase API funding date filter
+Hiring devs locally
+High (+3)
+LinkedIn job posts: React / Node / Python / iOS / Android
+Non-technical founder
+High (+2)
+Founder role = CEO/COO, no engineering background on LinkedIn
+Team size 1–30
+Medium (+2)
+LinkedIn company size, Crunchbase headcount
+Active product in market
+Medium (+1)
+Product Hunt launch, App Store listing, live website
+Used offshore devs before
+High (+2)
+Clutch review, mentions 'remote team' in LinkedIn posts
+Large in-house eng team
+Negative (−4)
+20+ engineers on LinkedIn
+Consulting/agency itself
+Negative (−5)
+Company type = agency or consulting
+3. The 6-Node LangGraph Pipeline
+The system is built as a LangGraph StateGraph with 6 nodes. Each node is a LangChain agent or tool chain. They run sequentially every morning, triggered by a scheduler.
+# LangGraph Pipeline — Daily Run
+START
+  │
+  ▼
+[ node_1_discover ]  ──  Crunchbase + LinkedIn + IndieHackers + PH
+  │
+  ▼
+[ node_2_score ]     ──  GPT-4o scores each lead against ICP (1–10)
+  │  filter: score >= 7
+  ▼
+[ node_3_enrich ]    ──  Hunter.io + Apollo + LinkedIn scrape
+  │
+  ▼
+[ node_4_personalize ] ─  GPT-4o writes unique email per lead
+  │
+  ▼
+[ node_5_outreach ]  ──  Gmail API sends email + schedules Day 4/9
+  │
+  ▼
+[ node_6_crm ]       ──  Google Sheets logs lead + status + signals
+  │
+  ▼
+END  (monitor loop checks replies every 2 hours)
+Node 1 — Discovery Agent
+Uses LangChain tools to pull raw leads from multiple sources in parallel using LangGraph's parallel branching.
+Source
+What It Pulls
+Free / Paid
+Crunchbase API
+Funded companies < 90 days, US/UK/UAE, 1–50 employees, tech sector
+$29/mo Basic
+LinkedIn (Scraped)
+Job posts: 'React', 'Node.js', 'Python', 'Flutter', 'Backend'
+PhantomBuster $69/mo
+AngelList / Wellfound
+Early-stage startups actively fundraising or hiring
+Free scraping
+Product Hunt
+Products launched in last 30 days with < 5 team members
+Free API
+IndieHackers
+Forum posts tagged 'looking for developer' or 'hiring'
+Free scraping
+Reddit
+r/entrepreneur, r/startups posts mentioning 'need a developer'
+Reddit API free
+Clutch.co
+Companies that have reviewed offshore dev agencies
+Free scraping
+Output format per lead (Python dict passed through LangGraph state):
+lead = {
+  'company_name': 'Acme Payments Inc.',
+  'website':      'https://acmepayments.com',
+  'linkedin_url': 'https://linkedin.com/company/acme-payments',
+  'location':     'San Francisco, CA, USA',
+  'team_size':    12,
+  'funding':      { 'amount': 2500000, 'stage': 'Seed', 'date': '2025-03-15' },
+  'source':       'crunchbase',
+  'raw_signals':  ['hiring React dev', 'non-tech founder', 'recently funded']
+}
+Node 2 — Scoring Agent (GPT-4o)
+A LangChain LLMChain with structured output. GPT-4o reads the lead dict and returns a score + reasoning. Only leads scoring 7+ are passed forward.
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+scoring_prompt = ChatPromptTemplate.from_messages([
+    ('system', SCORING_SYSTEM_PROMPT),
+    ('human', 'Score this lead: {lead_json}')
+])
+scoring_chain = scoring_prompt | ChatOpenAI(model='gpt-4o') | JsonOutputParser()
+# Returns:
+# { 'score': 8, 'reason': 'Seed-funded, hiring React dev, non-tech CEO',
+#   'hot_signals': ['recently_funded', 'hiring_devs'], 'skip_reason': None }
+Node 3 — Enrichment Agent
+Uses LangChain tools to find the right contact person and build a rich context profile for personalization.
+Hunter.io API: Find founder/CTO email from domain name
+Apollo.io API: Get full contact profile — name, role, LinkedIn, phone
+LinkedIn scrape: Pull founder's recent posts, bio, career history
+BuiltWith API: Detect their tech stack (React? Django? Shopify?)
+GitHub API: Is their codebase active? Last commit date?
+News search: Any recent press, product launches, or interviews?
+Output appended to lead dict:
+lead['contact'] = {
+  'name':       'Sarah Chen',
+  'role':       'CEO & Co-Founder',
+  'email':      'sarah@acmepayments.com',
+  'linkedin':   'linkedin.com/in/sarahchen',
+  'recent_post': 'Just closed our seed round! Now building the reconciliation module.',
+  'tech_stack': ['React', 'Node.js', 'PostgreSQL'],
+  'hook':       'Seed round + reconciliation module post on LinkedIn Mar 20'
+}
+Node 4 — Personalization Agent (GPT-4o)
+The most important node. GPT-4o reads the full enriched lead and writes a unique cold email — not from a template. Every email references something real and specific about that lead.
+personalization_prompt = ChatPromptTemplate.from_messages([
+    ('system', PERSONALIZATION_SYSTEM_PROMPT),
+    ('human', '''
+        Company: {company_name}
+        Contact: {contact_name}, {contact_role}
+        Hook: {hook}
+        Tech stack: {tech_stack}
+        Signals: {hot_signals}
+        Recent post: {recent_post}
+        Write a cold email. Return JSON: {{ subject, body }}
+    ''')
+])
+email_chain = personalization_prompt | ChatOpenAI(model='gpt-4o', temperature=0.7) | JsonOutputParser()
+Node 5 — Outreach Agent (Gmail)
+Uses the Gmail API (via a LangChain custom tool) to send emails from your account and schedule follow-ups using Google Calendar or a local queue stored in Google Sheets.
+Touch
+Timing
+Message Style
+Email 1 — Intro
+Day 0 (morning run)
+Personalized, specific hook, single CTA
+Email 2 — Follow-up
+Day 4
+Short: 'Wanted to make sure this reached you...'
+Email 3 — Last note
+Day 9
+Brief: 'Last one — here's a relevant case study'
+LinkedIn DM
+Day 2
+Connection request + 1-line note referencing email
+Stop condition
+Any day
+If reply detected → sequence stops, lead flagged as 'Replied'
+Follow-ups are stored in a 'Sequences' tab in Google Sheets with send_date, lead_id, and status. A second daily cron at 2 PM checks for due follow-ups and sends them.
+Node 6 — CRM Agent (Google Sheets)
+Uses the Google Sheets API (via LangChain tool) to log every lead processed and update statuses in real time.
+Column
+Data
+Auto / Manual
+ID
+Unique lead ID (UUID)
+Auto
+Company
+Name + website
+Auto
+Contact
+Name, role, email
+Auto
+Market
+US / UK / UAE
+Auto
+Type
+Startup / SMB / Individual
+Auto
+ICP Score
+1–10 + reason
+Auto
+Hot Signals
+Buying signals detected
+Auto
+Email 1 Sent
+Date sent
+Auto
+Follow-up Status
+Pending / Sent / Skip
+Auto
+Reply Status
+No Reply / Replied / Booked / Not Interested
+Auto (reply detection)
+Notes
+Your manual notes after calls
+Manual
+Revenue
+Deal value if closed
+Manual
+4. Tech Stack — Full Detail
+Layer
+Technology
+Purpose
+Cost
+AI Model
+OpenAI GPT-4o
+Scoring, personalization, reasoning
+~$0.01–0.05 per lead
+Agent Framework
+LangChain v0.3+
+Tool chains, prompt management, parsers
+Free (open source)
+Orchestration
+LangGraph
+Multi-agent state machine, parallel nodes, loops
+Free (open source)
+Email Sending
+Gmail API (OAuth2)
+Send emails from your own account
+Free
+Email Finding
+Hunter.io API
+Find founder email from domain
+Free: 25/mo · $49/mo: 500
+Lead Database
+Apollo.io API
+Contact profiles, company data
+Free: 50/mo · $49/mo: unlimited
+Lead Discovery
+Crunchbase API
+Funded company search
+$29/mo Basic
+LinkedIn Data
+PhantomBuster
+Job post scraping, profile scraping
+$69/mo
+Tech Detection
+BuiltWith API
+Detect company tech stack
+Free tier available
+CRM / Tracking
+Google Sheets API
+Lead log, follow-up queue, reporting
+Free
+File Storage
+Google Drive API
+Case studies, email attachments
+Free
+Scheduler
+GitHub Actions / n8n
+Daily cron at 8 AM PKT
+Free / $20/mo
+Language
+Python 3.11+
+All agent code
+Free
+Environment
+Docker + .env
+API key management, portability
+Free
+Monthly Cost Estimate
+Service
+Plan
+Monthly Cost
+OpenAI GPT-4o
+Pay-as-you-go (~500 leads/day)
+~$30–80
+Hunter.io
+Starter (500 searches)
+$49
+Apollo.io
+Basic (unlimited exports)
+$49
+Crunchbase
+Basic API
+$29
+PhantomBuster
+Growth
+$69
+n8n (optional)
+Cloud starter
+$20
+TOTAL
+~$246–$296/month
+ROI Check
+Cost: ~$300/month to run the system
+Result needed to break even: 1 client paying $300 (you'll get far more than this)
+Realistic month 2: 1–2 clients at $5,000–$15,000 each
+ROI: 15x–50x return on system cost
+5. Project Structure
+lead-gen-agent/
+├── agents/
+│   ├── discovery_agent.py      # Node 1: finds raw leads
+│   ├── scoring_agent.py        # Node 2: GPT-4o ICP scoring
+│   ├── enrichment_agent.py     # Node 3: contact + context lookup
+│   ├── personalization_agent.py # Node 4: GPT-4o email writer
+│   ├── outreach_agent.py       # Node 5: Gmail sender
+│   └── crm_agent.py           # Node 6: Google Sheets logger
+├── tools/
+│   ├── crunchbase_tool.py     # LangChain tool: Crunchbase API
+│   ├── hunter_tool.py         # LangChain tool: Hunter.io API
+│   ├── apollo_tool.py         # LangChain tool: Apollo.io API
+│   ├── gmail_tool.py          # LangChain tool: Gmail send/read
+│   ├── sheets_tool.py         # LangChain tool: Google Sheets R/W
+│   └── linkedin_tool.py       # LangChain tool: LinkedIn scraping
+├── graph/
+│   ├── state.py               # LangGraph AgentState dataclass
+│   └── pipeline.py            # LangGraph StateGraph definition
+├── prompts/
+│   ├── scoring_prompt.py      # System prompt for scoring agent
+│   └── personalization_prompt.py  # System prompt for email writer
+├── scheduler/
+│   └── run_pipeline.py        # Entry point, called by cron
+├── monitor/
+│   └── reply_monitor.py       # Polls Gmail for replies every 2h
+├── config/
+│   └── icp_config.yaml        # ICP rules, target geos, thresholds
+├── .env                       # API keys (never commit this)
+├── requirements.txt
+└── README.md
+6. LangGraph State Definition
+The AgentState is passed through every node. Each node reads from it and writes back to it. This is the core data contract of the pipeline.
+# graph/state.py
+from typing import TypedDict, List, Optional, Dict, Any
+from langgraph.graph import StateGraph, END
+class LeadState(TypedDict):
+    # Raw lead from discovery
+    company_name:  str
+    website:       str
+    linkedin_url:  str
+    location:      str
+    team_size:     int
+    funding:       Optional[Dict]
+    source:        str
+    raw_signals:   List[str]
+    # After scoring (Node 2)
+    icp_score:     Optional[int]
+    score_reason:  Optional[str]
+    hot_signals:   Optional[List[str]]
+    # After enrichment (Node 3)
+    contact:       Optional[Dict]
+    tech_stack:    Optional[List[str]]
+    hook:          Optional[str]
+    # After personalization (Node 4)
+    email_subject: Optional[str]
+    email_body:    Optional[str]
+    # After outreach (Node 5)
+    email_sent:    Optional[bool]
+    email_sent_at: Optional[str]
+    # After CRM (Node 6)
+    crm_row_id:    Optional[str]
+    status:        Optional[str]   # 'sent', 'replied', 'booked', 'skip'
+class PipelineState(TypedDict):
+    leads:         List[LeadState]
+    qualified:     List[LeadState]  # score >= 7
+    processed:     List[LeadState]  # completed pipeline
+    run_date:      str
+    errors:        List[str]
+# graph/pipeline.py
+from langgraph.graph import StateGraph, END
+from agents.discovery_agent     import run_discovery
+from agents.scoring_agent       import run_scoring
+from agents.enrichment_agent    import run_enrichment
+from agents.personalization_agent import run_personalization
+from agents.outreach_agent      import run_outreach
+from agents.crm_agent           import run_crm
+def build_pipeline() -> StateGraph:
+    graph = StateGraph(PipelineState)
+    graph.add_node('discover',     run_discovery)
+    graph.add_node('score',        run_scoring)
+    graph.add_node('enrich',       run_enrichment)
+    graph.add_node('personalize',  run_personalization)
+    graph.add_node('outreach',     run_outreach)
+    graph.add_node('crm',          run_crm)
+    graph.set_entry_point('discover')
+    graph.add_edge('discover',    'score')
+    graph.add_edge('score',       'enrich')      # filtered inside node
+    graph.add_edge('enrich',      'personalize')
+    graph.add_edge('personalize', 'outreach')
+    graph.add_edge('outreach',    'crm')
+    graph.add_edge('crm',          END)
+    return graph.compile()
+7. The Core GPT-4o Prompts
+These prompts are the 'brain' of the system. Tune them as you collect data on what converts.
+7.1 Scoring System Prompt
+prompts/scoring_prompt.py — SCORING_SYSTEM_PROMPT
+You are a B2B sales qualification expert for a Pakistani software development agency.
+We build web apps, mobile apps, and SaaS products for foreign clients.
+Our ideal client (ICP):
+- Geography: USA, United Kingdom, or UAE
+- Type: Tech startup (Seed–Series B), SMB, or solo founder
+- Size: 1–50 employees
+- Situation: Recently funded OR hiring devs locally OR non-tech founder building a product
+- Budget signal: Can afford $2,000–$20,000/month for development
+Score the given company from 1 to 10:
+  9–10: 3+ strong ICP signals. Obvious fit. Hot lead.
+  7–8:  2 strong signals. Likely fit. Worth pursuing.
+  4–6:  Unclear fit. Missing key signals.
+  1–3:  Bad fit. Large eng team, non-tech company, or direct competitor.
+Respond ONLY in JSON (no markdown):
+{
+  'score': <int 1-10>,
+  'reason': '<2 sentence explanation>',
+  'hot_signals': ['<signal1>', '<signal2>'],
+  'customer_type': 'startup|smb|individual',
+  'skip_reason': '<why to skip if score < 7, else null>'
+}
+7.2 Personalization System Prompt
+prompts/personalization_prompt.py — PERSONALIZATION_SYSTEM_PROMPT
+You are a senior business development manager at a top-tier software agency.
+You write cold emails that get replies. You write like a human, not a marketer.
+Rules (follow strictly):
+1. Subject line: Max 10 words. Reference something SPECIFIC about them (funding, product, post).
+2. Opening: First sentence must mention ONE specific thing about them. No generic openers.
+3. Pain bridge: Connect their situation to what we solve in 1–2 sentences.
+4. Social proof: Mention similar work we've done. Be specific about industry/feature.
+5. CTA: ONE low-friction ask only. 'Worth a 20-min call?' or 'Want me to send a case study?'
+6. Total length: 80–120 words max.
+7. Tone: Peer-to-peer, confident, never desperate or salesy.
+8. Never mention Pakistan in email 1. Let the quality speak first.
+9. Never say 'I hope this finds you well' or any generic opener.
+10. Never use bullet points or headers in the email body.
+Respond ONLY in JSON (no markdown):
+{ 'subject': '<subject line>', 'body': '<email body>' }
+7.3 Email Examples by Customer Type
+Startup — Recently Funded
+Subject: Shipped payment reconciliation for 2 fintechs — relevant to Acme?
+Hi Sarah,
+Congrats on the seed round — saw the TechCrunch piece. Noticed you're building out the payment
+reconciliation module and just posted about needing a senior backend engineer.
+We've shipped exactly this for two US fintech startups in the last 8 months.
+Happy to share the case study.
+Worth a 20-min call this week?
+— [Your Name], [Agency Name]
+SMB — Digitization Need
+Subject: Saw TechCrunch piece on [Company]'s manual process challenge
+Hi James,
+Read your interview about still running inventory on spreadsheets — that's a painful place to be
+when you're at 80 staff.
+We built a custom inventory + order management system for a UK retail SMB last year.
+Cut their ops time by 60%. Happy to walk you through it.
+15 minutes to see if it's relevant?
+— [Your Name]
+Individual — Solo Founder with an Idea
+Subject: Built 3 MVPs like yours — one launched to 2,000 users in 6 weeks
+Hi Mike,
+Saw your post on IndieHackers about needing a developer for your job-board idea.
+We've built 3 niche job boards in the last year — one went from idea to 2,000 users in 6 weeks.
+Fixed price, milestone-based. No equity. No surprises.
+Can I send you the case study?
+— [Your Name]
+8. Build Plan — Phase by Phase
+Phase
+Scope
+Deliverable
+Timeline
+Phase 1
+MVP
+Manual input → GPT-4o scoring → GPT-4o email draft → you review → send manually
+Working CLI script that outputs scored lead + draft email
+3–5 days
+Phase 2
+Semi-Auto
+Add Crunchbase + Hunter.io discovery. Leads auto-enriched. Drafts saved to Google Sheet for your approval before sending.
+Google Sheet with pre-written emails ready to review daily
+1–2 weeks
+Phase 3
+Full Auto
+Gmail API sends automatically. Follow-up sequences run on schedule. Reply detection updates CRM.
+Fully autonomous pipeline. You only handle replies + calls.
+2–3 weeks
+Phase 4
+Optimize
+A/B test subject lines. Track open/reply by industry, geography, customer type. Feed winners back into prompts.
+Conversion dashboard. Continuously improving prompts.
+Ongoing
+Phase 1 — Build This First (Day 1)
+A simple Python script that proves the concept. Takes a company URL, runs it through scoring + personalization, prints the result.
+# scheduler/run_pipeline.py (Phase 1 — MVP)
+import os, json
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+llm = ChatOpenAI(model='gpt-4o', api_key=os.getenv('OPENAI_API_KEY'))
+def score_lead(lead_info: str) -> dict:
+    chain = ChatPromptTemplate.from_messages([
+        ('system', SCORING_SYSTEM_PROMPT),
+        ('human', 'Score this lead: {lead}')
+    ]) | llm | JsonOutputParser()
+    return chain.invoke({'lead': lead_info})
+def write_email(lead_context: str) -> dict:
+    chain = ChatPromptTemplate.from_messages([
+        ('system', PERSONALIZATION_SYSTEM_PROMPT),
+        ('human', '{context}')
+    ]) | llm | JsonOutputParser()
+    return chain.invoke({'context': lead_context})
+if __name__ == '__main__':
+    lead_info = input('Paste company info: ')
+    score = score_lead(lead_info)
+    print(f'Score: {score["score"]} — {score["reason"]}')
+    if score['score'] >= 7:
+        email = write_email(lead_info)
+        print(f'Subject: {email["subject"]}')
+        print(f'Body:\n{email["body"]}')
+9. Environment Setup
+9.1 Required API Keys (.env)
+# .env — never commit this file
+OPENAI_API_KEY=sk-...
+# Lead discovery
+CRUNCHBASE_API_KEY=...
+HUNTER_API_KEY=...
+APOLLO_API_KEY=...
+PHANTOMBUSTER_API_KEY=...
+BUILTWITH_API_KEY=...
+# Google (use OAuth2 service account)
+GMAIL_CLIENT_ID=...
+GMAIL_CLIENT_SECRET=...
+GMAIL_REFRESH_TOKEN=...
+GOOGLE_SHEETS_ID=...   # ID of your CRM sheet
+GOOGLE_DRIVE_FOLDER_ID=...  # folder for case studies
+# Config
+MIN_ICP_SCORE=7
+MAX_EMAILS_PER_DAY=20
+YOUR_AGENCY_NAME=YourCompany
+YOUR_NAME=YourName
+YOUR_CALENDLY=https://calendly.com/yourname/30min
+9.2 Python Dependencies
+# requirements.txt
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langgraph>=0.2.0
+openai>=1.40.0
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=1.1.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+pyyaml>=6.0
+gspread>=5.12.0
+beautifulsoup4>=4.12.0
+schedule>=1.2.0
+9.3 Gmail OAuth Setup
+Follow these steps to get your Gmail API credentials:
+Go to console.cloud.google.com → Create a new project
+Enable Gmail API and Google Sheets API
+Create OAuth 2.0 credentials → Download JSON
+Run the auth flow once to get your refresh token
+Store credentials in .env — never commit to GitHub
+10. KPIs & Expected Results
+Metric
+Month 1
+Month 2
+Month 3+
+Leads discovered/day
+50–100
+50–100
+100–200 (more sources)
+Leads qualified (score ≥7)
+15–25/day
+20–30/day
+30–50/day
+Emails sent/day
+5–10 (cautious warm-up)
+10–20
+20–30
+Open rate
+40–60%
+50–65%
+55–70%
+Reply rate
+3–8%
+6–12%
+8–15%
+Replies/week
+1–3
+3–6
+5–10
+Discovery calls/week
+0–1
+1–2
+2–4
+Clients closed/month
+0–1
+1–2
+2–3
+Revenue Projection
+Month 1:  0–1 client × $5,000 avg = $0–5,000  (building + learning)
+Month 2:  1–2 clients × $7,000 avg = $7,000–14,000
+Month 3+: 2–3 clients × $10,000 avg = $20,000–30,000/month
+System cost: ~$300/month
+Net ROI month 3: $19,700–$29,700/month from a $300 investment
+11. Risks & Mitigations
+Risk
+Probability
+Mitigation
+Emails land in spam
+Medium
+Warm up domain 2 weeks. <20 emails/day initially. Plain text only. Set SPF/DKIM/DMARC.
+Low reply rates (<3%)
+Medium
+Narrow ICP. Change hook angle. Test subject lines. Add LinkedIn as second channel.
+LinkedIn blocks scraping
+High
+Use PhantomBuster with rate limits, or switch to official LinkedIn API.
+GPT-4o costs spike
+Low
+Cache enrichment data. Use gpt-4o-mini for scoring, gpt-4o only for email writing.
+Bad data quality
+Medium
+Validate emails with Hunter.io before sending. Skip leads missing email.
+No replies in week 1
+Low
+Normal — keep sending. Replies typically start week 2–3 of consistent outreach.
+12. Your Action Plan — Start Today
+This Week — 7 Days to First Email
+Day 1:  Sign up for OpenAI API, Hunter.io (free), Apollo.io (free). Set up .env file.
+Day 1:  Set up Gmail OAuth credentials in Google Cloud Console.
+Day 2:  Clone/create project structure. Install requirements.txt.
+Day 2:  Write and test the scoring_prompt.py with 5 real companies.
+Day 3:  Write and test the personalization_prompt.py. Review email quality.
+Day 3:  Set up Google Sheet CRM with all columns from Section 3.
+Day 4:  Build Phase 1 CLI script (score + write email from manual input).
+Day 5:  Run 10 real companies through it. Review every email. Tune prompts.
+Day 6:  Write your 3 agency case studies. Set up your Calendly link.
+Day 7:  Send your first 5 emails manually. DONE — you are in market.
+The perfect system ships after you've learned from real replies. Start simple. Ship fast. Iterate on data.
+Agentic Lead Gen Blueprint  ·  LangChain + LangGraph + OpenAI  ·  Version 2.0  ·  2025

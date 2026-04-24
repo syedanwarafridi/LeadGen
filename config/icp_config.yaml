@@ -1,0 +1,79 @@
+scoring:
+  min_score: 7
+  weights:
+    recently_funded: 3
+    hiring_devs: 3
+    non_tech_founder: 2
+    small_team: 2
+    active_product: 1
+    used_offshore_before: 2
+    large_eng_team: -4
+    is_agency: -5
+
+targets:
+  geographies: [US, UK, UAE]
+  customer_types: [startup, smb, individual]
+  team_size_max: 50
+
+discovery:
+  reddit:
+    subreddits:
+      - entrepreneur
+      - startups
+      - SaaS
+      - forhire
+      - techstartups
+      - indiehackers
+      - smallbusiness
+    keywords:
+      - "looking for developer"
+      - "need a developer"
+      - "hire developer"
+      - "build MVP"
+      - "technical co-founder"
+      - "CTO needed"
+      - "software developer needed"
+      - "need to build an app"
+    posts_per_keyword: 10
+    time_filter: week
+
+  hackernews:
+    queries:
+      - "looking for developer"
+      - "hiring engineer"
+      - "technical cofounder"
+      - "need to build"
+      - "who wants to be hired"
+    results_per_query: 10
+
+  product_hunt:
+    days_back: 30
+    min_upvotes: 5
+    max_results: 20
+
+  github:
+    topics:
+      - startup
+      - saas
+      - mvp
+      - side-project
+    pushed_after: "2024-01-01"
+    max_results: 20
+    min_stars: 1
+    max_stars: 500
+
+  indiehackers:
+    max_results: 20
+
+outreach:
+  max_emails_per_day: 20
+  follow_up_days: [4, 9]
+  send_hour_utc: 8
+
+email_sending:
+  plain_text_only: true
+  signature_template: |
+    —
+    {name}
+    {agency_name}
+    {calendly}

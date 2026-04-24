@@ -1,0 +1,28 @@
+# Core framework (all free / open source)
+langchain>=0.3.0
+langchain-core>=0.3.0
+langgraph>=0.2.0
+
+# Free LLM providers — set GROQ_API_KEY or GEMINI_API_KEY in .env
+langchain-groq>=0.2.0
+langchain-google-genai>=2.0.0
+
+# Discovery — all free
+praw>=7.7.0                  # Reddit API
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Google APIs — free
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=1.1.0
+gspread>=5.12.0
+
+# Email verification — free
+dnspython>=2.4.0
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0
+schedule>=1.2.0
