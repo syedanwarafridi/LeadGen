@@ -169,18 +169,30 @@ def _discover_indiehackers(cfg: dict) -> list:
 # ── Deduplication ─────────────────────────────────────────────────────────────
 
 def _deduplicate(leads: list) -> list:
+    """Remove duplicates within this run AND leads already seen in previous runs."""
     from utils.helpers import extract_domain
-    seen_domains = set()
-    seen_names   = set()
-    unique       = []
+    from utils.local_db import is_lead_seen, init_db
+
+    init_db()
+
+    seen_domains  = set()
+    seen_names    = set()
+    unique        = []
+    skipped_prev  = 0
 
     for lead in leads:
         domain   = extract_domain(lead.get("website") or "")
         name_key = (lead.get("company_name") or "").lower().strip()[:30]
 
+        # Skip duplicates within this run
         if domain and domain in seen_domains:
             continue
         if name_key and name_key in seen_names:
+            continue
+
+        # Skip leads already processed in a previous run
+        if is_lead_seen(domain or "", lead.get("company_name") or ""):
+            skipped_prev += 1
             continue
 
         if domain:
@@ -188,6 +200,9 @@ def _deduplicate(leads: list) -> list:
         if name_key:
             seen_names.add(name_key)
         unique.append(lead)
+
+    if skipped_prev:
+        log.info(f"Skipped {skipped_prev} already-processed leads from previous runs")
 
     return unique
 

@@ -68,6 +68,13 @@ def init_db() -> None:
                 errors          TEXT,
                 duration_secs   REAL
             );
+
+            CREATE TABLE IF NOT EXISTS seen_leads (
+                domain_key      TEXT PRIMARY KEY,
+                company_key     TEXT,
+                first_seen      TEXT,
+                times_seen      INTEGER DEFAULT 1
+            );
         """)
 
 
@@ -147,3 +154,60 @@ def log_pipeline_run(run: dict) -> None:
              run.get("leads_qualified", 0), run.get("emails_sent", 0),
              str(run.get("errors", [])), run.get("duration_secs", 0)),
         )
+
+
+# ── Seen-leads deduplication across runs ─────────────────────────────────────
+
+def _make_keys(domain: str, company_name: str) -> tuple[str, str]:
+    import re
+    d_key = (domain or "").lower().strip().lstrip("www.")
+    c_key = re.sub(r"[^a-z0-9]", "", (company_name or "").lower())[:30]
+    return d_key, c_key
+
+
+def is_lead_seen(domain: str, company_name: str) -> bool:
+    """Return True if this lead was already processed in a previous run."""
+    d_key, c_key = _make_keys(domain, company_name)
+    if not d_key and not c_key:
+        return False
+    with _conn() as con:
+        if d_key:
+            row = con.execute(
+                "SELECT 1 FROM seen_leads WHERE domain_key=?", (d_key,)
+            ).fetchone()
+            if row:
+                return True
+        if c_key:
+            row = con.execute(
+                "SELECT 1 FROM seen_leads WHERE company_key=?", (c_key,)
+            ).fetchone()
+            if row:
+                return True
+    return False
+
+
+def mark_lead_seen(domain: str, company_name: str) -> None:
+    """Record a lead as processed so it won't be returned in future runs."""
+    d_key, c_key = _make_keys(domain, company_name)
+    if not d_key and not c_key:
+        return
+    now = datetime.utcnow().isoformat()
+    with _conn() as con:
+        con.execute("""
+            INSERT INTO seen_leads (domain_key, company_key, first_seen)
+            VALUES (?,?,?)
+            ON CONFLICT(domain_key) DO UPDATE SET times_seen = times_seen + 1
+        """, (d_key or f"nodom_{c_key}", c_key, now))
+
+
+def get_seen_count() -> int:
+    """Total number of unique leads ever processed."""
+    with _conn() as con:
+        row = con.execute("SELECT COUNT(*) FROM seen_leads").fetchone()
+        return row[0] if row else 0
+
+
+def reset_seen_leads() -> None:
+    """Clear the seen-leads table — useful for testing or a full reset."""
+    with _conn() as con:
+        con.execute("DELETE FROM seen_leads")

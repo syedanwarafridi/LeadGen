@@ -122,7 +122,7 @@ div[data-testid="stDataFrame"] { border-radius: 10px; overflow: hidden; }
 """, unsafe_allow_html=True)
 
 # ── Demo data (instant results mode) ──────────────────────────────────────────
-DEMO_LEADS = [
+DEMO_LEADS_ALL = [
     {
         "company_name": "Finflow AI",
         "website": "https://finflow.ai",
@@ -223,7 +223,138 @@ DEMO_LEADS = [
         "email_sent": False,
         "status": "ready",
     },
+    # ── 6 more leads for variety ──────────────────────────────────────────────
+    {
+        "company_name": "Zenly Maps",
+        "website": "https://zenlymaps.io",
+        "location": "Manchester, UK",
+        "market": "UK",
+        "source": "betalist",
+        "team_size": 2,
+        "icp_score": 8,
+        "customer_type": "individual",
+        "score_reason": "Solo founder, BetaList launch, non-technical background, building mapping SaaS.",
+        "hot_signals": ["solo_founder", "betalist_launch", "non_tech_founder"],
+        "tech_stack": ["Google Maps API", "React"],
+        "hook": "BetaList launch · solo non-technical founder · UK",
+        "description": "Hyperlocal event discovery platform for UK cities",
+        "contact": {"name": "Priya Patel", "role": "Founder", "email": "priya@zenlymaps.io"},
+        "email_subject": "Built 2 mapping products for UK founders — saw your BetaList launch",
+        "email_body": "Hi Priya,\n\nSaw Zenly on BetaList — hyperlocal events is a smart angle for UK cities.\n\nWe built two location-based platforms for UK founders in the last 18 months. Both solo-founder projects, fixed price.\n\nWant to see one?\n\n—\nAnwar\nPashtX",
+        "email_sent": False,
+        "status": "ready",
+    },
+    {
+        "company_name": "Taskr AI",
+        "website": "https://taskr.ai",
+        "location": "Toronto, Canada",
+        "market": "US",
+        "source": "hackernews",
+        "team_size": 4,
+        "icp_score": 7,
+        "customer_type": "startup",
+        "score_reason": "Show HN post with good traction, small team, hiring React engineer on Wellfound.",
+        "hot_signals": ["show_hn_launch", "hiring_devs", "small_team"],
+        "tech_stack": ["Next.js", "OpenAI API", "Supabase"],
+        "hook": "Show HN: We built an AI task manager that actually finishes tasks for you",
+        "description": "AI agent that executes tasks autonomously, not just tracks them",
+        "contact": {"name": "David Osei", "role": "CEO", "email": "david@taskr.ai"},
+        "email_subject": "AI + Next.js workflow tool — built one that hit 3k users",
+        "email_body": "Hi David,\n\nCaught the Show HN post — autonomous task execution is a much better pitch than another to-do app.\n\nWe built a similar AI workflow tool on Next.js + Supabase last year, went from 0 to 3k users in 8 weeks.\n\nWorth a quick 20 minutes?\n\n—\nAnwar\nPashtX",
+        "email_sent": False,
+        "status": "ready",
+    },
+    {
+        "company_name": "GreenRoute",
+        "website": "https://greenroute.co",
+        "location": "Dubai, UAE",
+        "market": "UAE",
+        "source": "wellfound",
+        "team_size": 9,
+        "icp_score": 8,
+        "customer_type": "startup",
+        "score_reason": "Series A funded, hiring 3 mobile engineers in UAE, sustainability-focused logistics app.",
+        "hot_signals": ["recently_funded", "hiring_devs", "active_product"],
+        "tech_stack": ["Flutter", "Firebase", "Google Maps"],
+        "hook": "Series A · hiring Flutter devs in UAE · logistics mobile app",
+        "description": "Carbon-neutral last-mile delivery platform for GCC region",
+        "contact": {"name": "Khalid Al-Mansoori", "role": "CTO", "email": "khalid@greenroute.co"},
+        "email_subject": "Flutter logistics app — shipped for 2 UAE startups",
+        "email_body": "Hi Khalid,\n\nSaw GreenRoute is hiring Flutter engineers on Wellfound — great timing on the Series A.\n\nWe've shipped two Flutter logistics apps for UAE-based startups. One is live with 50k users in the GCC.\n\nOpen to a quick call this week?\n\n—\nAnwar\nPashtX",
+        "email_sent": False,
+        "status": "ready",
+    },
+    {
+        "company_name": "DocuMind",
+        "website": "https://documind.app",
+        "location": "Austin, TX, USA",
+        "market": "US",
+        "source": "yc_directory",
+        "team_size": 5,
+        "icp_score": 9,
+        "customer_type": "startup",
+        "score_reason": "YC W25, legal-tech AI, non-tech founder (lawyer), hiring 2 backend engineers, seed funded.",
+        "hot_signals": ["recently_funded", "yc_funded", "non_tech_founder", "hiring_devs"],
+        "tech_stack": ["Python", "FastAPI", "OpenAI API"],
+        "hook": "YC W25 · founder is a lawyer · hiring backend devs · AI document analysis",
+        "description": "AI-powered contract analysis and risk detection for law firms",
+        "contact": {"name": "Amanda Torres", "role": "CEO & Founder", "email": "amanda@documind.app"},
+        "email_subject": "Legal AI backend — built for a NYC legaltech startup last year",
+        "email_body": "Hi Amanda,\n\nCongrats on YC W25 — AI for contract analysis is a huge space right now.\n\nWe built the backend for a similar legaltech product (Python + FastAPI + OpenAI) for a NYC startup last year. They're now processing 10k contracts a month.\n\nWorth a 20-min call?\n\n—\nAnwar\nPashtX",
+        "email_sent": False,
+        "status": "ready",
+    },
+    {
+        "company_name": "PodPilot",
+        "website": "https://podpilot.fm",
+        "location": "London, UK",
+        "market": "UK",
+        "source": "producthunt",
+        "team_size": 1,
+        "icp_score": 7,
+        "customer_type": "individual",
+        "score_reason": "Solo founder, Product Hunt launch with 300 upvotes, no technical co-founder.",
+        "hot_signals": ["solo_founder", "active_product", "non_tech_founder"],
+        "tech_stack": ["OpenAI API", "React"],
+        "hook": "Product Hunt #3 of the day · 300 upvotes · solo non-technical founder",
+        "description": "AI that turns long-form podcasts into social clips and newsletters",
+        "contact": {"name": "Tom Bradley", "role": "Founder", "email": "tom@podpilot.fm"},
+        "email_subject": "AI media tool — built one that processes 500 podcasts/day",
+        "email_body": "Hi Tom,\n\nSaw PodPilot hit #3 on Product Hunt yesterday — smart product.\n\nWe built a similar AI media processing pipeline for a US podcast network. It now handles 500 episodes a day at scale.\n\nIf you ever hit infrastructure limits or need to move faster, I'd love to chat.\n\nCan I send you the case study?\n\n—\nAnwar\nPashtX",
+        "email_sent": False,
+        "status": "ready",
+    },
+    {
+        "company_name": "Hireflow",
+        "website": "https://hireflow.io",
+        "location": "San Francisco, CA, USA",
+        "market": "US",
+        "source": "github",
+        "team_size": 7,
+        "icp_score": 8,
+        "customer_type": "startup",
+        "score_reason": "Active GitHub repo with 200 stars, hiring engineers, small team, B2B HR-tech.",
+        "hot_signals": ["active_product", "hiring_devs", "community_traction"],
+        "tech_stack": ["Vue.js", "Django", "PostgreSQL"],
+        "hook": "200 GitHub stars · hiring 2 engineers · Vue + Django HR-tech",
+        "description": "Automated candidate screening and interview scheduling platform",
+        "contact": {"name": "Natalie Wong", "role": "Co-Founder", "email": "natalie@hireflow.io"},
+        "email_subject": "Django + Vue HR platform — shipped for a 10-person startup",
+        "email_body": "Hi Natalie,\n\nCame across Hireflow on GitHub — 200 stars for a B2B tool is solid traction.\n\nWe built a very similar candidate screening platform on Django + Vue for a Series A HR-tech startup last year. Took 10 weeks end to end.\n\nWorth a 20-min call?\n\n—\nAnwar\nPashtX",
+        "email_sent": False,
+        "status": "ready",
+    },
 ]
+
+import random as _random
+def _get_demo_leads(markets: list, min_score: int, n: int = 5) -> list:
+    """Return a fresh random subset of demo leads each run."""
+    pool = [l for l in DEMO_LEADS_ALL
+            if l["market"] in markets and l["icp_score"] >= min_score]
+    if not pool:
+        pool = DEMO_LEADS_ALL
+    _random.shuffle(pool)
+    return pool[:n]
 
 SOURCE_BADGES = {
     "yc_directory":  ('<span class="badge badge-yc">YC</span>', "🟣"),
@@ -357,10 +488,8 @@ with results_col:
 if run_btn:
     if demo_mode:
         # ── DEMO MODE — animated with pre-baked data ──────────────────────────
-        leads = [l for l in DEMO_LEADS if l["market"] in
-                 (["US"] if us else []) + (["UK"] if uk else []) + (["UAE"] if uae else [])]
-        if not leads:
-            leads = DEMO_LEADS
+        markets = (["US"] if us else []) + (["UK"] if uk else []) + (["UAE"] if uae else [])
+        leads = _get_demo_leads(markets, min_score)
 
         steps = {n: "waiting" for n in
             ["discover", "score", "enrich", "personalize", "outreach", "crm"]}

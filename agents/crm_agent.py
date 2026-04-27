@@ -24,6 +24,15 @@ def run_crm(state: PipelineState) -> PipelineState:
             row_id = log_lead_to_sheets(lead)
             updated = {**lead, "crm_row_id": row_id}
             processed.append(updated)
+
+            # Mark as seen so future runs skip this company
+            from utils.local_db import mark_lead_seen
+            from utils.helpers import extract_domain
+            mark_lead_seen(
+                extract_domain(lead.get("website") or "") or "",
+                lead.get("company_name") or "",
+            )
+
             log.info(
                 f"  Logged: {lead.get('company_name')} | "
                 f"score={lead.get('icp_score')} | "
